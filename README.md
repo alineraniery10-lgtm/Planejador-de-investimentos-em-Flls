@@ -1,0 +1,195 @@
+[README.md](https://github.com/user-attachments/files/33630487/README.md)
+# 🐷 DIO Invest — Planejador de Investimentos em FIIs no Excel
+
+Planilha feita inteiramente no **Microsoft Excel** que simula o crescimento de aportes mensais, estima os dividendos recebidos e sugere como distribuir o dinheiro entre os tipos de **Fundos de Investimento Imobiliário (FIIs)** conforme o **perfil de investidor** escolhido.
+
+> Projeto desenvolvido como desafio da **DIO (Digital Innovation One)**.
+
+![Painel principal](images/01-painel-principal.png)
+
+---
+
+## 🎯 Objetivo
+
+Criar uma ferramenta simples e prática em que o usuário informe apenas alguns dados (salário, aporte, prazo e taxa) e receba, automaticamente:
+
+- quanto terá acumulado ao final do período;
+- quanto isso renderia em dividendos por mês;
+- uma comparação de cenários de 2 a 30 anos;
+- a divisão sugerida do aporte entre os tipos de FII, de acordo com o perfil Conservador, Moderado ou Agressivo.
+
+Todos os cálculos são feitos por fórmulas, sem macros: basta alterar os campos de entrada e todo o painel se atualiza.
+
+---
+
+## 🗂️ Estrutura da planilha
+
+| Aba | Função |
+|---|---|
+| **APP** | Painel principal: entradas, resultados, cenários, perfil, distribuição por tipo de FII e gráfico |
+| **Planilha2** | Base de apoio com os percentuais de cada perfil por tipo de FII |
+
+### Aba APP
+
+| Bloco | O que faz |
+|---|---|
+| **Configurações** | Salário, rendimento mensal da carteira e a sugestão de investimento (30% do salário) |
+| **Investimento mensal** | Entradas: valor do aporte, anos e taxa mensal. Saídas: patrimônio acumulado e dividendos mensais |
+| **Cenários** | Projeção do patrimônio e dos dividendos para 2, 5, 10, 20 e 30 anos |
+| **Perfil** | Lista suspensa (Conservador, Moderado, Agressivo) que define a distribuição |
+| **Tipo de FII** | Percentual sugerido e valor em reais para Papel, Tijolo, Híbridos, FOFs, Desenvolvimento e Hotelarias, com total |
+| **Gráfico** | Pizza com a distribuição percentual do perfil escolhido |
+
+### Aba Planilha2
+
+Tabela de apoio com 18 linhas (3 perfis × 6 tipos de FII). Cada linha tem uma **chave** composta (`Perfil-Tipo`), o perfil, o tipo de FII e o percentual sugerido.
+
+![Base de percentuais](images/03-base-de-percentuais.png)
+
+---
+
+## ⚙️ Como foi construído
+
+### 1. Nomes definidos
+As células de entrada e saída receberam nomes, o que deixa as fórmulas legíveis:
+
+| Nome | Célula | Conteúdo |
+|---|---|---|
+| `salario` | `APP!D12` | Salário mensal |
+| `rendimento_carteira` | `APP!D13` | Rendimento mensal da carteira (dividend yield) |
+| `sugestao_investimento` | `APP!D14` | 30% do salário |
+| `aporte` | `APP!D17` | Valor investido por mês |
+| `qtd_anos` | `APP!D18` | Prazo em anos |
+| `taxa_mensal` | `APP!D19` | Taxa de rendimento mensal |
+| `patrimonio` | `APP!D20` | Patrimônio acumulado |
+
+### 2. Valor futuro com `VF` (FV)
+O patrimônio acumulado é calculado com a função financeira de valor futuro, convertendo anos em meses:
+
+```excel
+=FV(taxa_mensal; qtd_anos*12; aporte*-1)
+```
+
+Os cenários reaproveitam a mesma lógica, mudando só o prazo (coluna A) e travando as referências com `$`:
+
+```excel
+=FV($D$19; $A24*12; $D$17*-1)
+```
+
+### 3. Dividendos mensais
+O patrimônio acumulado multiplicado pelo rendimento da carteira estima a renda mensal gerada:
+
+```excel
+=patrimonio*rendimento_carteira
+```
+
+### 4. Sugestão de investimento
+Regra simples de 30% do salário como referência de quanto investir:
+
+```excel
+=D12*30%
+```
+
+### 5. Chave composta + `PROCV` (VLOOKUP)
+A aba **Planilha2** cria uma chave concatenando perfil e tipo de FII:
+
+```excel
+=B3&"-"&C3
+```
+
+Na aba **APP**, o perfil escolhido na lista suspensa é combinado com cada tipo de FII para buscar o percentual correto:
+
+```excel
+=VLOOKUP($C$32&"-"&B36; Planilha2!$A:$D; 4; FALSE)
+```
+
+O valor em reais de cada categoria é o percentual multiplicado pelo aporte:
+
+```excel
+=C36*$C$33
+```
+
+E o total (`=SUM(D36:D41)`) confere que 100% do aporte foi distribuído.
+
+### 6. Validação de dados
+A célula **Perfil** (`APP!C32`) usa uma **lista suspensa** com as opções `Conservador, Moderado, Agressivo`, evitando erros de digitação que quebrariam a busca.
+
+### 7. Gráfico de pizza
+O gráfico lê a faixa de tipos (`B36:B41`) e de percentuais (`C36:C41`) e muda sozinho quando o perfil é alterado.
+
+![Gráfico de distribuição](images/02-grafico-distribuicao.png)
+
+### 8. Identidade visual
+Cabeçalho com a marca **DIO Invest**, blocos coloridos por função (laranja para configurações, verde para investimento e cenários), formato monetário em R$ e percentual nas taxas.
+
+---
+
+## 📊 Exemplo de resultado
+
+Com os valores padrão da planilha (aporte de R$ 200,00 por mês, taxa de 1,079% ao mês e rendimento de carteira de 0,6%):
+
+| Prazo | Patrimônio acumulado | Dividendo mensal |
+|---|---|---|
+| 2 anos | R$ 5.445,53 | R$ 32,67 |
+| 5 anos | R$ 16.755,38 | R$ 100,53 |
+| 10 anos | R$ 48.656,84 | R$ 291,94 |
+| 20 anos | R$ 225.039,68 | R$ 1.350,24 |
+| 30 anos | R$ 864.433,93 | R$ 5.186,60 |
+
+Distribuição do aporte de R$ 200,00 no perfil **Moderado**:
+
+| Tipo de FII | % | Valor |
+|---|---|---|
+| Papel | 32% | R$ 64,00 |
+| Tijolo | 35% | R$ 70,00 |
+| Híbridos | 8% | R$ 16,00 |
+| FOFs | 5% | R$ 10,00 |
+| Desenvolvimento | 10% | R$ 20,00 |
+| Hotelarias | 10% | R$ 20,00 |
+| **Total** | **100%** | **R$ 200,00** |
+
+---
+
+## 🚀 Como usar
+
+1. Baixe o arquivo [`dio-invest.xlsx`](dio-invest.xlsx)
+2. Abra no Microsoft Excel (ou LibreOffice Calc) e habilite a edição
+3. Na aba **APP**, preencha o **salário** e o **rendimento da carteira**
+4. Informe quanto investir por mês, por quantos anos e a taxa mensal esperada
+5. Escolha o **perfil** na lista suspensa
+6. Acompanhe patrimônio, dividendos, cenários, distribuição por FII e o gráfico
+
+> ⚠️ Esta planilha é uma **simulação educacional**. Os resultados dependem das taxas informadas, não consideram impostos, inflação nem variação de cotas, e **não constituem recomendação de investimento**.
+
+---
+
+## 📚 Aprendizados
+
+- Dar **nomes às células** deixa as fórmulas muito mais fáceis de ler e manter
+- A função **VF** resolve juros compostos com aportes periódicos em uma única linha
+- Uma **chave composta** (`Perfil-Tipo`) permite buscar valores por dois critérios com um simples `PROCV`
+- Uma **lista suspensa** garante dados consistentes na entrada
+- Separar a **base de apoio** do painel facilita ajustar percentuais sem mexer nas fórmulas
+- Documentar no GitHub ajuda a consolidar o conhecimento e a mostrar o trabalho
+
+---
+
+## 💡 Ideias de evolução
+
+- Incluir validação numérica nos campos de aporte, prazo e taxa
+- Adicionar formatação condicional para destacar o perfil escolhido na base de apoio
+- Criar um gráfico de evolução do patrimônio ano a ano
+- Considerar aumento anual do aporte e inflação
+
+---
+
+## 📁 Estrutura do repositório
+
+```
+├── README.md
+├── dio-invest.xlsx
+└── images/
+    ├── 01-painel-principal.png
+    ├── 02-grafico-distribuicao.png
+    └── 03-base-de-percentuais.png
+```
