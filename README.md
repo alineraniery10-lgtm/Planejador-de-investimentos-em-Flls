@@ -174,14 +174,6 @@ Distribuição do aporte de R$ 200,00 no perfil **Moderado**:
 
 ---
 
-## 💡 Ideias de evolução
-
-- Incluir validação numérica nos campos de aporte, prazo e taxa
-- Adicionar formatação condicional para destacar o perfil escolhido na base de apoio
-- Criar um gráfico de evolução do patrimônio ano a ano
-- Considerar aumento anual do aporte e inflação
-
----
 
 ## 📁 Estrutura do repositório
 
